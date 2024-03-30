@@ -1,0 +1,69 @@
+--  Berapa jumlah total kasus Covid-19 aktif yang baru di setiap provinsi?
+SELECT
+  Location,
+  SUM(new_active_cases) AS total_new_active_cases
+FROM `challenge_1_covid19.covid-19-ind`
+WHERE Location != 'Indonesia'
+GROUP BY Location
+ORDER BY total_new_active_cases DESC;
+
+-- Total kematian karena COVID-19 paling sedikit menurut Location
+SELECT
+  A.Location,
+  Total_Deaths
+FROM `challenge_1_covid19.covid-19-ind` A
+INNER JOIN (
+  SELECT
+    MAX(Date) AS Date,
+    Location
+  FROM `challenge_1_covid19.covid-19-ind`
+  GROUP BY Location
+) B
+ON A.Date = B.Date
+WHERE B.Location = A.Location AND A.Location != 'Indonesia'
+ORDER BY total_deaths ASC;
+
+-- Data tentang tanggal-tanggal ketika rate kasus recovered di Indonesia paling tinggi beserta jumlah rate-nya
+SELECT
+  date,
+  case_recovered_rate
+FROM `challenge_1_covid19.covid-19-ind`
+WHERE (location = 'Indonesia')
+ORDER BY case_recovered_rate DESC;
+
+-- Total CFR dan CRR per location
+WITH cfr_crr_by_province AS (
+  SELECT
+    A.Location,
+    Total_Deaths,
+    total_recovered,
+    total_cases
+  FROM `challenge_1_covid19.covid-19-ind` A
+  INNER JOIN (
+    SELECT
+      MAX(Date) AS Date,
+      Location
+    FROM `challenge_1_covid19.covid-19-ind`
+    GROUP BY Location
+  ) B
+  ON A.Date = B.Date
+  WHERE B.Location = A.Location AND A.Location != 'Indonesia'
+)
+
+SELECT
+  Location,
+  ROUND(total_deaths/total_cases,4) AS cfr,
+  ROUND(total_recovered/total_cases,4) AS crr
+FROM cfr_crr_by_province;
+
+-- Data tentang tanggal-tanggal saat total kasus Covid-19 mulai menyentuh angka 30.000-an
+SELECT
+  MIN(date) AS date,
+  Location,
+  MIN(total_cases) AS total_cases
+FROM `challenge_1_covid19.covid-19-ind`
+WHERE
+  (total_cases >= 30000) AND
+  (Location != 'Indonesia')
+GROUP BY Location
+ORDER BY Date;
